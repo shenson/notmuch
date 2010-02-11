@@ -155,7 +155,8 @@ prefix_t PROBABILISTIC_PREFIX[]= {
     { "from",			"XFROM" },
     { "to",			"XTO" },
     { "attachment",		"XATTACHMENT" },
-    { "subject",		"XSUBJECT"}
+    { "subject",		"XSUBJECT"},
+    { "listid",         "XLISTID"}
 };
 
 int

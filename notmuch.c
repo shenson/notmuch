@@ -55,6 +55,7 @@ static const char search_terms_help[] =
     "\t\t\ttag:<tag> (or is:<tag>)\n"
     "\t\t\tid:<message-id>\n"
     "\t\t\tthread:<thread-id>\n"
+    "\t\t\tlistid:<list-id>\n"
     "\n"
     "\t\tThe from: prefix is used to match the name or address of\n"
     "\t\tthe sender of an email message.\n"

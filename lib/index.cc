@@ -413,6 +413,51 @@ _index_mime_part (notmuch_message_t *message,
     }
 }
 
+static void
+_index_listid (notmuch_message_t *message,
+               const char *list_id_header)
+{
+    const char *begin_list_id, *end_list_id;
+
+    if (list_id_header == NULL)
+	return;
+
+    /* RFC2919 says that the list-id is found at the end of the header
+     * and enclosed between angle brackets. If we cannot find a
+     * matching pair of brackets containing at least one character,
+     * we ignore the list id header. */
+
+    begin_list_id = strrchr (list_id_header, '<');
+    if (!begin_list_id)
+	return;
+
+    end_list_id = strrchr(begin_list_id, '>');
+    if (!end_list_id || (end_list_id - begin_list_id < 2))
+	return;
+
+    void *local = talloc_new (NULL);
+
+    /* We extract the list id between the angle brackets */
+    const char *list_id = talloc_strndup(local, begin_list_id + 1,
+					 end_list_id - begin_list_id - 1);
+
+    /* All the text before is the description of the list */
+    const char *description = talloc_strndup(local, list_id_header,
+					     begin_list_id - list_id_header);
+
+    /* Description may be RFC2047 encoded */
+    char *decoded_desc = g_mime_utils_header_decode_phrase(description);
+
+    _notmuch_message_gen_terms(message, "listid", list_id);
+
+    if (decoded_desc)
+	_notmuch_message_gen_terms(message, "listid", decoded_desc);
+
+    free(decoded_desc);
+    talloc_free (local);
+}
+
+
 notmuch_status_t
 _notmuch_message_index_file (notmuch_message_t *message,
 			     const char *filename)
@@ -422,7 +467,7 @@ _notmuch_message_index_file (notmuch_message_t *message,
     GMimeMessage *mime_message = NULL;
     InternetAddressList *addresses;
     FILE *file = NULL;
-    const char *from, *subject;
+    const char *from, *subject, *listid;
     notmuch_status_t ret = NOTMUCH_STATUS_SUCCESS;
     static int initialized = 0;
 
@@ -456,6 +501,9 @@ _notmuch_message_index_file (notmuch_message_t *message,
     subject = g_mime_message_get_subject (mime_message);
     subject = skip_re_in_subject (subject);
     _notmuch_message_gen_terms (message, "subject", subject);
+
+    listid = g_mime_object_get_header (GMIME_OBJECT(mime_message), "List-Id");
+    _index_listid (message, listid);
 
     _index_mime_part (message, g_mime_message_get_mime_part (mime_message));
 
