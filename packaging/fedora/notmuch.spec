@@ -1,4 +1,4 @@
-%global git 306635c2
+%global snapshot 20100319
 
 %if %($(pkg-config emacs) ; echo $?)
 %global emacs_version 23.1
@@ -11,8 +11,8 @@
 %endif
 
 Name:           notmuch
-Version:        0.0
-Release:        0.3.%{git}%{?dist}
+Version:        0.0.%{snapshot}
+Release:        0.1%{?dist}
 Summary:        Not much of an email program
 
 Group:          Applications/Internet
@@ -24,9 +24,9 @@ URL:            http://notmuchmail.org/
 #
 # git clone git://notmuchmail.org/git/notmuch
 # cd notmuch
-# git archive --format=tar --prefix=notmuch/ HEAD | bzip2 > notmuch-`git show-ref --hash=8 HEAD`.tar.bz2
+# git archive --format=tar --prefix=notmuch-0.0.`date +%Y%m%d`/ HEAD | bzip2 > notmuch-0.0.`date +%Y%m%d`.tar.bz2
 #
-Source0:        notmuch-%{git}.tar.bz2
+Source0:        notmuch-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  xapian-core-devel
@@ -80,17 +80,17 @@ support for arbitrary tags, then Notmuch also may be exactly what
 you've been looking for.
 
 %prep
-%setup -q -n notmuch
+%setup -q
 
 %build
 make %{?_smp_mflags} CFLAGS="%{optflags}"
-emacs -batch -f batch-byte-compile notmuch.el
+emacs -batch -f batch-byte-compile emacs/notmuch.el
 
 %install
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot} prefix=%{_prefix}
 mkdir -p %{buildroot}%{emacs_startdir}
-install -m0644 -p notmuch.el* %{buildroot}%{emacs_startdir}
+install -m0644 -p emacs/notmuch.el* %{buildroot}%{emacs_startdir}
 
 %clean
 rm -rf %{buildroot}
@@ -99,7 +99,6 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING COPYING-GPL-3 INSTALL README TODO
 
-%{_sysconfdir}/bash_completion.d/notmuch
 %{_bindir}/notmuch
 %{_mandir}/man1/notmuch.1*
 %{emacs_startdir}/notmuch.el*
